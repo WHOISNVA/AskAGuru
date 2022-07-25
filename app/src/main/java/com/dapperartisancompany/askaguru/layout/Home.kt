@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.dapperartisancompany.askaguru.PlayListLayout
 import com.dapperartisancompany.askaguru.viewmodels.MainViewModel
 import com.dapperartisancompany.askaguru.viewmodels.PlayerSwipeableState
 import com.dapperartisancompany.askaguru.viewmodels.PlayerViewModel
@@ -94,21 +95,24 @@ fun HomeScreen(mainViewModel: MainViewModel, playerViewModel: PlayerViewModel) {
                 text = "Jazz",
                 modifier = Modifier.padding(horizontal = 10.dp)
             )
+            CustomChip(
+                selected = false,
+                text = "Emo",
+                modifier = Modifier.padding(horizontal = 10.dp)
+            )
             // Create a custom image chip whose state is inactive
             CustomChip(
                 selected = false,
                 text = "Rock",
                 modifier = Modifier.padding(horizontal = 10.dp)
             )
-            CustomChip(
-                selected = false,
-                text = "Alternative",
-                modifier = Modifier.padding(horizontal = 10.dp)
-            )
-        }
 
+
+        }
+//        PlayListLayout()
         LazyColumn(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
                 .background(Color.Black),
             verticalArrangement = Arrangement.Bottom
         ) {
@@ -121,5 +125,6 @@ fun HomeScreen(mainViewModel: MainViewModel, playerViewModel: PlayerViewModel) {
                 }
             }
         }
+
     }
 }
