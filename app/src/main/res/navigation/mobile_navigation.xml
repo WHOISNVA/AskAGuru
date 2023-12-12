@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@+id/navigation_home">
+
+    <fragment
+        android:id="@+id/navigation_home"
+        android:name="com.example.askguru.ui.home.HomeFragment"
+        android:label="@string/title_home"
+        tools:layout="@layout/fragment_home" />
+
+    <fragment
+        android:id="@+id/navigation_dashboard"
+        android:name="com.example.askguru.ui.dashboard.DashboardFragment"
+        android:label="@string/title_dashboard"
+        tools:layout="@layout/fragment_dashboard" >
+
+        <argument
+            android:name="playlistModel"
+            app:argType="com.example.askguru.viewmodel.home.PlayListResponseItem"
+            app:nullable="true"
+            android:defaultValue="@null" />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_notifications"
+        android:name="com.example.askguru.ui.recommendation.NotificationsFragment"
+        android:label="@string/title_notifications"
+        tools:layout="@layout/fragment_notifications" />
+
+    <fragment
+        android:id="@+id/navigation_search"
+        android:name="com.example.askguru.ui.search.SearchFragment"
+        android:label="@string/title_home"
+        tools:layout="@layout/fragment_search" />
+
+    <fragment
+        android:id="@+id/navigation_create_list"
+        android:name="com.example.askguru.ui.create_play_list.CreateListFragment"
+        android:label="Create List"
+        tools:layout="@layout/fragment_create_list" />
+
+    <fragment
+        android:id="@+id/navigation_full_list"
+        android:name="com.example.askguru.ui.full_play_list.FullPlayFragment"
+        android:label="Profile"
+        tools:layout="@layout/fragment_full_play" />
+
+    <fragment
+        android:id="@+id/navigation_ranking"
+        android:name="com.example.askguru.ui.ranking.RankingFragment"
+        android:label="Ranking"
+        tools:layout="@layout/fragment_ranking" >
+        <action
+            android:id="@+id/action_navigation_ranking_to_navigation_profile_data"
+            app:destination="@id/navigation_profile_data" />
+    </fragment>
+
+    <!-- -->
+    <fragment
+        android:id="@+id/navigation_profile_data"
+        android:name="com.example.askguru.ui.profile.ProfileFragment"
+        android:label="Profile"
+        tools:layout="@layout/fragment_profile" >
+
+<!--        <argument-->
+<!--            android:name="user"-->
+<!--            app:argType="String"-->
+<!--            app:nullable="true"-->
+<!--            android:defaultValue="@null" />-->
+
+    </fragment>
+
+
+    <dialog
+        android:id="@+id/add_song"
+        android:name="com.example.askguru.ui.add_song.AddSongFragment"
+        android:label="Add Song"
+        tools:layout="@layout/fragment_add_song" />
+
+    <dialog
+        android:id="@+id/navigation_playlist_details"
+        android:name="com.example.askguru.ui.playlist.PlaylistDetailsFragment"
+        android:label="Playlist Details"
+        tools:layout="@layout/fragment_playlist_details">
+
+        <argument
+            android:name="playlistModel"
+            app:argType="com.example.askguru.viewmodel.home.PlayListResponseItem"
+            app:nullable="true"
+            android:defaultValue="@null" />
+
+    </dialog>
+
+    <dialog
+        android:id="@+id/navigation_settings"
+        android:name="com.example.askguru.ui.settings.SettingsFragment"
+        android:label="Settings"
+        tools:layout="@layout/fragment_settings" />
+
+    <dialog
+        android:id="@+id/navigation_add_suggestion"
+        android:name="com.example.askguru.ui.add_suggestion.AddSuggestionFragment"
+        android:label="Add Suggestion"
+        tools:layout="@layout/fragment_add_suggestion" >
+        <argument
+            android:name="playlistModel"
+            app:argType="com.example.askguru.viewmodel.home.PlayListResponseItem"
+            app:nullable="true"
+            android:defaultValue="@null" />
+    </dialog>
+
+
+    <dialog
+        android:id="@+id/navigation_profile_play_list_details"
+        android:name="com.example.askguru.ui.profile_play_list_details.ProfilePlatListDetailsFragment"
+        android:label="Profile Playlist Details"
+        tools:layout="@layout/fragment_profile_plat_list_details">
+
+<!--        <argument-->
+<!--            android:name="profilePlaylistModel"-->
+<!--            app:argType="com.example.askguru.viewmodel.profile.ProfileDataResponse"-->
+<!--            app:nullable="true"-->
+<!--            android:defaultValue="@null" />-->
+
+    </dialog>
+
+</navigation>

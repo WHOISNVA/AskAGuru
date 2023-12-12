@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.LinearLayoutCompat
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".ui.search.SearchFragment">
+
+
+    <!-- pop , jazz, rock -->
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvGenre"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingEnd="@dimen/_10sdp"
+        android:layout_marginStart="@dimen/_4sdp"/>
+
+    <!-- Normal Play list view llNormalList -->
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:id="@+id/llNormalList"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:visibility="visible">
+
+        <!-- llSearch -->
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:id="@+id/llSearch"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/_30sdp"
+            android:background="@drawable/search_bg"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginHorizontal="@dimen/_10sdp"
+            android:layout_marginTop="@dimen/_10sdp">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/_10sdp"
+                android:src="@drawable/search"/>
+
+            <androidx.appcompat.widget.AppCompatEditText
+                android:id="@+id/edSearch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Search"
+                android:background="@null"
+                android:textColorHint="@color/dark_grey"
+                android:layout_marginStart="@dimen/_10sdp"/>
+
+        </androidx.appcompat.widget.LinearLayoutCompat>
+
+
+
+
+        <!-- rvPlayList -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvPlayList"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+
+            android:clipToPadding="false"
+            android:paddingStart="5dp"
+            android:paddingEnd="5dp"
+            android:visibility="visible"
+            android:layout_weight="1"
+            android:paddingBottom="@dimen/_20sdp" />
+
+
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+
+    <!-- Grid List View nestedScroll-->
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/nestedScroll"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:visibility="gone"
+        android:layout_marginTop="@dimen/_5sdp"
+        android:layout_marginBottom="@dimen/_10sdp"
+        android:clipToPadding="false">
+
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:id="@+id/llGridList"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="@dimen/_10sdp"
+            android:orientation="vertical">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Most Recent"
+                android:textSize="@dimen/_14ssp"
+                android:paddingStart="16dp"
+                android:textColor="@color/white"
+                android:fontFamily="@font/poppins_semi_bold"/>
+
+            <!-- rvRecentPlayList -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvRecentPlayList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/_5sdp"
+                android:clipToPadding="false"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:visibility="visible" />
+
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Most Plays"
+                android:textSize="@dimen/_14ssp"
+                android:textColor="@color/white"
+                android:paddingStart="16dp"
+                android:layout_marginTop="@dimen/_10sdp"
+                android:fontFamily="@font/poppins_semi_bold"/>
+
+            <!-- rvMostPlayList -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvMostPlayList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/_5sdp"
+                android:clipToPadding="false"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:visibility="visible"
+                />
+
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Longest PlayList"
+                android:textSize="@dimen/_14ssp"
+                android:textColor="@color/white"
+                android:paddingStart="16dp"
+                android:layout_marginTop="@dimen/_10sdp"
+                android:fontFamily="@font/poppins_semi_bold"/>
+
+            <!-- rvlongestPlayList -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvLongestPlayList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/_5sdp"
+                android:clipToPadding="false"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:layout_weight="1"
+                android:visibility="visible" />
+
+
+
+
+        </androidx.appcompat.widget.LinearLayoutCompat>
+
+    </androidx.core.widget.NestedScrollView>
+
+
+    <!--Shimmer Effect-->
+    <com.facebook.shimmer.ShimmerFrameLayout
+        android:id="@+id/shimmer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginBottom="@dimen/_60sdp"
+        android:clipToPadding="false"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="@dimen/_20sdp"
+        android:visibility="gone">
+
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <include layout="@layout/shimmer_item_home"/>
+            <include layout="@layout/shimmer_item_home"/>
+            <include layout="@layout/shimmer_item_home"/>
+            <include layout="@layout/shimmer_item_home"/>
+
+
+        </androidx.appcompat.widget.LinearLayoutCompat>
+
+
+
+    </com.facebook.shimmer.ShimmerFrameLayout>
+
+
+
+
+</androidx.appcompat.widget.LinearLayoutCompat>

@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/llHeardar"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+
+    android:background="@color/app_bg_color"
+    android:fitsSystemWindows="true"
+
+    android:orientation="vertical"
+    android:windowSoftInputMode="adjustPan"
+    tools:context=".ui.login.LoginActivity">
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:orientation="vertical">
+
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:layout_width="@dimen/_75sdp"
+            android:layout_height="@dimen/_82sdp"
+            android:src="@drawable/logo" />
+
+
+        <androidx.appcompat.widget.AppCompatEditText
+            android:id="@+id/edEmail"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="@dimen/_30sdp"
+            android:layout_marginTop="@dimen/_40sdp"
+            android:fontFamily="@font/poppins_regular"
+            android:hint="Enter Email"
+            android:inputType="textEmailAddress"
+            android:paddingLeft="@dimen/_10sdp"
+            android:textColor="@color/white"
+            android:textColorHint="#808080"
+            android:textSize="@dimen/_12ssp" />
+
+        <!-- <com.google.android.material.textfield.TextInputLayout
+             android:layout_width="match_parent"
+             android:layout_height="wrap_content"
+             android:layout_marginHorizontal="@dimen/_30sdp"
+             android:layout_marginTop="@dimen/_40sdp"
+             android:textColorHint="#808080"
+             app:hintAnimationEnabled="true"
+             app:hintTextColor="#808080"
+             android:hint="Enter Email" >
+
+             <com.google.android.material.textfield.TextInputEditText
+                 android:id="@+id/edEmail"
+                 android:layout_width="match_parent"
+                 android:layout_height="wrap_content"
+                 android:inputType="textEmailAddress"
+                 android:textSize="@dimen/_12ssp"
+                 android:fontFamily="@font/poppins_regular"
+                 android:textColorHint="#808080"
+                 android:maxLength="32"
+                 android:textColor="@color/white"
+                 android:paddingBottom="@dimen/_15sdp"
+                 android:background="@color/colorTransparent"/>
+
+         </com.google.android.material.textfield.TextInputLayout>-->
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+
+            <androidx.appcompat.widget.AppCompatEditText
+                android:id="@+id/edPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="@dimen/_30sdp"
+                android:layout_marginTop="@dimen/_20sdp"
+                android:fontFamily="@font/poppins_regular"
+                android:hint="Enter Password"
+                android:inputType="textPassword"
+                android:maxLength="16"
+                android:paddingLeft="@dimen/_10sdp"
+                android:textColor="@color/white"
+                android:textColorHint="#808080"
+                android:textSize="@dimen/_12ssp" />
+
+            <ImageView
+                android:id="@+id/ivEye"
+                android:layout_width="@dimen/_20sdp"
+                android:layout_height="@dimen/_20sdp"
+                android:layout_gravity="end|center"
+                android:layout_marginTop="@dimen/_9sdp"
+                android:layout_marginEnd="@dimen/_40sdp"
+                android:src="@drawable/show" />
+        </FrameLayout>
+
+        <!--<com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="@dimen/_30sdp"
+            android:textColorHint="#808080"
+            app:hintAnimationEnabled="true"
+            app:passwordToggleEnabled="true"
+            app:hintTextColor="#808080"
+            android:hint="Enter Password" >
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPassword"
+                android:textSize="@dimen/_12ssp"
+                android:maxLength="16"
+                android:fontFamily="@font/poppins_regular"
+                android:textColorHint="#808080"
+                android:textColor="@color/white"
+                android:paddingBottom="@dimen/_15sdp"
+                android:background="@color/colorTransparent"/>
+
+        </com.google.android.material.textfield.TextInputLayout>-->
+
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tvForgotPassword"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:layout_marginHorizontal="@dimen/_30sdp"
+            android:fontFamily="@font/poppins_regular"
+            android:gravity="end"
+            android:paddingVertical="@dimen/_8sdp"
+            android:text="Forgot Password ?"
+            android:textColor="@color/clr_orange"
+            android:textSize="@dimen/_10ssp" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnLogin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="@dimen/_30sdp"
+            android:layout_marginTop="@dimen/_30sdp"
+            android:background="@drawable/btn_bg"
+            android:fontFamily="@font/poppins_semi_bold"
+            android:padding="@dimen/_5sdp"
+            android:text="Login"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:textSize="@dimen/_14ssp" />
+
+
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:layout_marginTop="@dimen/_5sdp"
+            android:orientation="horizontal">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="@dimen/_10sdp"
+                android:layout_marginBottom="@dimen/_20sdp"
+                android:fontFamily="@font/poppins_regular"
+                android:gravity="center"
+                android:padding="@dimen/_2sdp"
+                android:text="Not Account Yet ?"
+                android:textColor="@color/white"
+                android:textSize="@dimen/_10ssp" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tvSignUp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="@dimen/_10sdp"
+                android:layout_marginBottom="@dimen/_20sdp"
+                android:fontFamily="@font/poppins_regular"
+                android:gravity="center"
+                android:padding="@dimen/_2sdp"
+                android:text=" Sign Up Now"
+                android:textColor="@color/clr_orange"
+                android:textSize="@dimen/_10ssp" />
+
+        </androidx.appcompat.widget.LinearLayoutCompat>
+
+
+
+
+
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+
+    <!--https://stackoverflow.com/questions/3685790/how-to-switch-between-hide-and-view-password-->
