@@ -205,15 +205,32 @@ class PlaylistDetailsFragment : DialogFragment(), AddSongClickListener {
 
         recomnation?.forEachIndexed { index, recommendation ->
             recommendation.spotipyId?.let {
-                queueList.add(it)
+                queueList.add("spotify:track:$it")
             }
         }
         return queueList
     }
 
     private fun startPlaying() {
-        SpotifyHelper.getInstance(requireContext()).playTrack(playTrackID!!)
-        SpotifyHelper.getInstance(requireContext()).queueSongs(getQueueList())
+     /*   SpotifyHelper.getInstance(requireContext()).playTrack(playTrackID!!)
+        SpotifyHelper.getInstance(requireContext()).queueSongs(getQueueList())*/
+        newPlaying()
+    }
+    private fun newPlaying(){
+        val songList = mutableListOf<String>()
+        songList.add(playTrackID.toString())
+        val recommendation =  playlistModel?.playlist?.recommendations?.filter { it.spotipyId != null && it.spotipyId != "" }
+        recommendation?.forEachIndexed { index, recommendation ->
+            recommendation.spotipyId?.let {
+                songList.add("spotify:track:$it")
+            }
+        }
+        /*songList.add("spotify:track:7tTjNyAdEopOYLJ8yttDWM")//ABC (Alphabet Song)
+        songList.add("spotify:track:45x3yuEpjmiqL4SFdT4srk")//Test Me
+        songList.add("spotify:track:1DMEzmAoQIikcL52psptQL")//test drive
+        songList.add("spotify:track:0hkPWDyQoqiRiLSI535oZJ")//ABC (Alphabet Song)*/
+
+        SpotifyHelper.getInstance(requireContext()).setUpPlayList(songList)
     }
 
     private val storyOptionCallBack = object : SpotifyCallback {
@@ -251,13 +268,13 @@ class PlaylistDetailsFragment : DialogFragment(), AddSongClickListener {
         }
 
         override fun onTrackStatusChange(playerState: PlayerState) {
-            Log.d(
+           /* Log.d(
                 "SpotifyHelper",
                 "Playerdetailview playTrack track isPaused ${playerState.isPaused}"
-            )
+            )*/
             playerState?.let {
                 it.track?.let {
-                    Log.d("SpotifyHelper", "Playerdetailview track url = ${it.uri}")
+               //     Log.d("SpotifyHelper", "Playerdetailview track url = ${it.uri}")
                     if (it.uri.toString().equals(playTrackID)) {
                         if (playerState.isPaused) {
                             binding.ivPlay.setImageResource(R.drawable.play)

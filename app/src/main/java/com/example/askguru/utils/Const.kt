@@ -19,11 +19,11 @@ class Const {
 
 
         //spotify data
-       /* const val SPOTIPY_CLIENT_ID = "d9929a26097e4166ad003c5c4c0f8620"
-        const val SPOTIPY_REDIRECT_URL = "comspotifytestsdk://callback"*/
-
-        //mp
-        const val SPOTIPY_CLIENT_ID = "3b257bdb09cc4d9b8149bd5d536a52c8"
+        const val SPOTIPY_CLIENT_ID = "d9929a26097e4166ad003c5c4c0f8620"
         const val SPOTIPY_REDIRECT_URL = "comspotifytestsdk://callback"
+
+       /* //mp
+        const val SPOTIPY_CLIENT_ID = "3b257bdb09cc4d9b8149bd5d536a52c8"
+        const val SPOTIPY_REDIRECT_URL = "comspotifytestsdk://callback"*/
     }
 }
