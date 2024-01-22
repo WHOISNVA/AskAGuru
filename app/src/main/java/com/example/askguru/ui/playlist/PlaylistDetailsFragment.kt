@@ -17,13 +17,17 @@ import com.example.askguru.network.ApiHelper
 import com.example.askguru.network.RetrofitBuilder
 import com.example.askguru.network.Status
 import com.example.askguru.network.ViewModelFactory
+import com.example.askguru.ui.profile.LikedPlaylists
 import com.example.askguru.utils.Const
 import com.example.askguru.utils.PreferenceHelper
 import com.example.askguru.utils.SpotifyCallback
 import com.example.askguru.utils.SpotifyHelper
 import com.example.askguru.utils.getLongToSeconds
 import com.example.askguru.viewmodel.home.HomeVm
+import com.example.askguru.viewmodel.home.PlayListResponseItem
 import com.example.askguru.viewmodel.home.Recommendation
+import com.example.askguru.viewmodel.profile.ProfileVm
+import com.google.gson.Gson
 import com.spotify.android.appremote.api.SpotifyAppRemote
 import com.spotify.protocol.types.PlayerState
 import com.spotify.protocol.types.Track
@@ -31,10 +35,16 @@ import com.spotify.protocol.types.Track
 class PlaylistDetailsFragment : DialogFragment(), AddSongClickListener {
 
     private lateinit var binding: FragmentPlaylistDetailsBinding
+    //private var playlistModel : PlayListResponseItem? = null
     private val playlistModel by lazy { PlaylistDetailsFragmentArgs.fromBundle(requireArguments()).playlistModel }
+
     val mainActivity by lazy { requireActivity() }
 
     //val adapter by lazy { RecommendedListAdapter(mainActivity, playlistModel?.playlist?.recommendations) }
+
+    private var isRecommendationListClick = false
+    private var recommendationListClickPosition = -1
+    private var recommendationListClickedSpotifyId = ""
 
     private val viewModel: HomeVm by lazy {
         ViewModelProvider(
@@ -51,6 +61,14 @@ class PlaylistDetailsFragment : DialogFragment(), AddSongClickListener {
         return R.style.FullScreenDialogStyle
     }
 
+    private var isLiked = false
+
+    private val profileVewModel: ProfileVm by lazy {
+        ViewModelProvider(
+            this,
+            ViewModelFactory(ApiHelper(RetrofitBuilder.apiService))
+        )[ProfileVm::class.java]
+    }
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -65,7 +83,6 @@ class PlaylistDetailsFragment : DialogFragment(), AddSongClickListener {
         super.onViewCreated(view, savedInstanceState)
 
         setStyle(DialogFragment.STYLE_NORMAL, R.style.FullScreenDialogStyle)
-
         binding.ivBack.setOnClickListener {
             findNavController().popBackStack()
 
@@ -103,15 +120,6 @@ class PlaylistDetailsFragment : DialogFragment(), AddSongClickListener {
         binding.rvSongs!!.layoutManager = LinearLayoutManager(requireActivity())
         binding.rvSongs!!.adapter = adapter
 
-        binding.ivLike.setOnClickListener {
-            val token = "Bearer " + PreferenceHelper.getStringPreference(
-                requireContext(),
-                Const.PRE_AUTHORIZATION_TOKEN
-            )
-            likeApiCall(token, playlistModel?.playlist?.playlistId!!)
-        }
-
-
         binding.btnSuggestSongs.setOnClickListener {
             val bundle = Bundle()
             bundle.putSerializable("playlistModel", playlistModel)
@@ -132,21 +140,125 @@ class PlaylistDetailsFragment : DialogFragment(), AddSongClickListener {
                 Toast.makeText(requireContext(), "can't play", Toast.LENGTH_SHORT).show()
             }
         }
+
+        getProfileDataApiCall()
+        updateLike()
+        binding.ivLike.setOnClickListener {
+            val token =  PreferenceHelper.getStringPreference(
+                requireContext(),
+                Const.PRE_AUTHORIZATION_TOKEN
+            )
+
+            token?.let {
+                val fullToken = "Bearer " + it
+                likeApiCall(fullToken, playlistModel?.playlist?.playlistId!!)
+            } ?: kotlin.run {
+                Toast.makeText(requireContext(), "Please login", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        binding.iconAskGuru.setOnClickListener {
+            viewModel.getAllPlayListRandom()
+        }
+        observer()
+    }
+
+    private fun observer(){
+        viewModel.playlistsLiveData.observe(this) {
+            it.let { resource ->
+                when (resource.status) {
+                    Status.LOADING -> {
+                        binding.progressBar.visibility = View.VISIBLE
+                    }
+
+                    Status.SUCCESS -> {
+                        binding.progressBar.visibility = View.GONE
+                        viewModel.getRandomSong()
+                    }
+
+                    Status.ERROR -> {
+                        binding.progressBar.visibility = View.GONE
+                        Toast.makeText(
+                            requireContext(),
+                            "Some thing went wrong",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+
+                }
+            }
+        }
+
+        viewModel.randomPlaylist.observe(this) {
+            //play random playlist here
+            Log.d("randomPlaylist","$it")
+            playlistModel?.playlist = it
+            setSpotify()
+        }
+    }
+
+
+    private fun updateLike(){
+        if(isLiked){
+            binding.ivLike.setImageResource(R.drawable.baseline_favorite_24)
+        }else{
+            binding.ivLike.setImageResource(R.drawable.empty_heart)
+        }
+    }
+    private fun getProfileDataApiCall() {
+        val token = PreferenceHelper.getStringPreference(requireContext(), Const.PRE_AUTHORIZATION_TOKEN)
+        Log.e("kp","token ==> $token")
+        token?.let {
+            profileVewModel.getProfileData("Bearer $token").observe(requireActivity()) { it ->
+                it.let { resource ->
+                    when (resource.status) {
+                        Status.LOADING -> {}
+                        Status.SUCCESS -> {
+                            it.data?.let {
+                                isLiked = hasLiked(it.playlists.liked_playlists)
+                                updateLike()
+                            }
+                        }
+
+                        Status.ERROR -> {
+                            Toast.makeText(
+                                requireActivity(), "Some thing went wrong", Toast.LENGTH_LONG
+                            ).show()
+                        }
+
+                    }
+                }
+            }
+        }
+
+    }
+
+    private fun hasLiked(likedPlaylists: List<LikedPlaylists>) : Boolean{
+        return likedPlaylists.any { it.playlist.playlist_id == playlistModel?.playlist?.playlistId }
     }
 
 
     private fun likeApiCall(token: String, playlistId: String) {
-        viewModel.like(token, playlistId).observe(mainActivity) {
+        viewModel.like(token, playlistId,isLiked).observe(mainActivity) {
             it.let { resource ->
                 when (resource.status) {
                     Status.LOADING -> {}
 
                     Status.SUCCESS -> {
-                        it.data?.like_count.let {
-                            val count = it
-                            binding.tvLikeCount.text = "$count"
+                        it.data?.let {
+                            it.like_count.let {
+                                val count = it
+                                binding.tvLikeCount.text = "$count"
+                            }
+                            if(it.status == 200){
+                                Toast.makeText(requireContext(), "Liked", Toast.LENGTH_SHORT).show()
+                                isLiked = true
+                            }else{
+                                Toast.makeText(requireContext(), "Disliked", Toast.LENGTH_SHORT).show()
+                                isLiked = false
+                            }
+                            updateLike()
                         }
-                        Toast.makeText(requireContext(), "Liked", Toast.LENGTH_SHORT).show()
                     }
 
                     Status.ERROR -> {
@@ -170,51 +282,46 @@ class PlaylistDetailsFragment : DialogFragment(), AddSongClickListener {
         findNavController().navigate(R.id.navigation_dashboard, bundle)
     }
 
+    override fun onItemClick(list: Recommendation?, position: Int) {
+        list?.let {
+            Toast.makeText(requireContext(), "Playing - ${list.songTitle}", Toast.LENGTH_SHORT).show()
+            recommendationListClick(clickPos = position,clickedSpotifyId = list.spotipyId.toString())
+        }?: kotlin.run {
+            Toast.makeText(requireContext(), "Something went wrong", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     private fun setSpotify() {
         playlistModel?.playlist?.spotipyId?.let {
             playTrackID = "spotify:track:$it"
             SpotifyHelper.getInstance(requireContext()).setCallback(callback = storyOptionCallBack)
             SpotifyHelper.getInstance(requireContext()).authenticateSpotify()
+
+            Toast.makeText(requireContext(), "Playing - ${playlistModel?.playlist?.songTitle}", Toast.LENGTH_SHORT).show()
         } ?: kotlin.run {
             Toast.makeText(requireContext(), "can't play", Toast.LENGTH_SHORT).show()
         }
     }
 
-    private fun getQueueList(): List<String> {
-        val queueList = mutableListOf<String>()
+    private fun recommendationListClick(clickPos : Int, clickedSpotifyId : String){
+        isRecommendationListClick = true
+        recommendationListClickPosition = clickPos
+        recommendationListClickedSpotifyId = "spotify:track:$clickedSpotifyId"
 
-        val recomnation =
-            playlistModel?.playlist?.recommendations?.filter { it.spotipyId != null && it.spotipyId != "" }
-                ?: mutableListOf()
-        Log.d("getQueueList", "getQueueList recomnation = ${recomnation?.size} $recomnation")
-        /*if (recomnation.isEmpty()) {
-            Log.d("getQueueList", "added static recomndation")
-            queueList.add("7tTjNyAdEopOYLJ8yttDWM")//ABC (Alphabet Song)
-            queueList.add("45x3yuEpjmiqL4SFdT4srk")//Test Me
-            queueList.add("1DMEzmAoQIikcL52psptQL")//test drive
-            queueList.add("0hkPWDyQoqiRiLSI535oZJ")//ABC (Alphabet Song)
-        } else {
-            Log.d("getQueueList", "added default recomndation")
-            recomnation?.forEachIndexed { index, recommendation ->
-                recommendation.spotipyId?.let {
-                    queueList.add(it)
-                }
-            }
-        }*/
-
-        recomnation?.forEachIndexed { index, recommendation ->
-            recommendation.spotipyId?.let {
-                queueList.add("spotify:track:$it")
-            }
-        }
-        return queueList
+        Log.d("SpotifyHelper","recommendationListClick $isRecommendationListClick , $recommendationListClickPosition, $recommendationListClickedSpotifyId")
+        SpotifyHelper.getInstance(requireContext()).setCallback(callback = storyOptionCallBack)
+        SpotifyHelper.getInstance(requireContext()).authenticateSpotify()
     }
 
     private fun startPlaying() {
      /*   SpotifyHelper.getInstance(requireContext()).playTrack(playTrackID!!)
         SpotifyHelper.getInstance(requireContext()).queueSongs(getQueueList())*/
-        newPlaying()
+
+        if(isRecommendationListClick){
+            SpotifyHelper.getInstance(requireContext()).playRecommendationListClick(recommendationListClickedSpotifyId)
+        }else{
+            newPlaying()
+        }
     }
     private fun newPlaying(){
         val songList = mutableListOf<String>()

@@ -3,7 +3,9 @@ package com.example.askguru.repository
 import com.example.askguru.network.ApiHelper
 import com.example.askguru.viewmodel.add_song.AddSuggestionRequest
 import com.example.askguru.viewmodel.create_list.CreatePlatListRequest
+import com.example.askguru.viewmodel.profile.UpdateProfileRequest
 import com.example.askguru.viewmodel.signup.SignUpRequest
+import okhttp3.MultipartBody
 
 
 class MainRepository(private val apiHelper: ApiHelper) {
@@ -19,6 +21,7 @@ class MainRepository(private val apiHelper: ApiHelper) {
     suspend fun getRankingProfileData(userId: String) = apiHelper.getRankingProfileData(userId)
     suspend fun getProfileData(token: String) = apiHelper.getProfileData(token)
     suspend fun like(token: String,id: String) = apiHelper.like(token,id)
+    suspend fun disLike(token: String,id: String) = apiHelper.disLike(token,id)
 
     suspend fun getSearchList(token: String,text: String) = apiHelper.getSearchList(token,text)
 
@@ -37,4 +40,7 @@ class MainRepository(private val apiHelper: ApiHelper) {
 
 
     suspend fun removePlayList(token: String, playListId:String) = apiHelper.removePlayList(token,playListId)
+
+    suspend fun uploadProfile(token: String, images: List<MultipartBody.Part>) = apiHelper.uploadProfile(token,images)
+    suspend fun updateBio(token: String,  request: UpdateProfileRequest) = apiHelper.updateBio(token,request)
 }

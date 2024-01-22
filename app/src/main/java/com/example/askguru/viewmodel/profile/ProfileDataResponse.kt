@@ -20,7 +20,7 @@ data class Playlists(
 data class User(
     val accepted_recs_count: Any,
     val access_token: Any,
-    val biography: Any,
+    val biography: String,
     val created_on: String,
     val email: String,
     val email_verified: Boolean,

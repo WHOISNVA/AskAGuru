@@ -160,4 +160,6 @@ dependencies {
     implementation files('libs/spotify-app-remote-release-0.8.0.aar')
     implementation 'com.spotify.android:auth:1.2.5' // Maven dependency
 
+
+    implementation("com.vanniktech:android-image-cropper:4.5.0")
 }

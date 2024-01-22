@@ -2,7 +2,10 @@ package com.example.askguru.network
 
 import com.example.askguru.viewmodel.add_song.AddSuggestionRequest
 import com.example.askguru.viewmodel.create_list.CreatePlatListRequest
+import com.example.askguru.viewmodel.profile.UpdateProfileRequest
 import com.example.askguru.viewmodel.signup.SignUpRequest
+import okhttp3.MultipartBody
+import retrofit2.http.Part
 
 
 class ApiHelper(private val apiService: ApiService) {
@@ -28,6 +31,7 @@ class ApiHelper(private val apiService: ApiService) {
     suspend fun getProfileData(token: String) = apiService.getProfileData(token)
 
     suspend fun like(token: String, id: String) = apiService.like(token, id)
+    suspend fun disLike(token: String, id: String) = apiService.disLike(token, id)
 
     suspend fun getSearchList(token: String, text: String) = apiService.getSearchList(token, text)
 
@@ -48,5 +52,8 @@ class ApiHelper(private val apiService: ApiService) {
     suspend fun rejectRequest(token: String, recommendationId:String) = apiService.rejectRequest(token,recommendationId)
 
     suspend fun removePlayList(token: String, playListId:String) = apiService.removePlayList(token,playListId)
+
+    suspend fun uploadProfile(token: String, images: List<MultipartBody.Part>) = apiService.uploadProfile(token,images)
+    suspend fun updateBio(token: String, request: UpdateProfileRequest) = apiService.updateBio(token,request)
 
 }

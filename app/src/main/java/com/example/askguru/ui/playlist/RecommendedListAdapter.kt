@@ -50,6 +50,10 @@ class RecommendedListAdapter(val mainActivity: FragmentActivity,
                     Toast.makeText(mainActivity,"Please login first",Toast.LENGTH_SHORT).show()
                 }
             }
+
+            itemView.setOnClickListener {
+                listener.onItemClick(model,position)
+            }
         }
 
     }

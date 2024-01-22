@@ -13,11 +13,16 @@ import com.example.askguru.viewmodel.home.PlayListResponse
 import com.example.askguru.viewmodel.login.UserResponse
 import com.example.askguru.viewmodel.notification.AcceptedResponse
 import com.example.askguru.viewmodel.profile.ProfileDataResponse
+import com.example.askguru.viewmodel.profile.UpdateProfileRequest
+import com.example.askguru.viewmodel.profile.UploadResponse
 import com.example.askguru.viewmodel.ranking.RankListResponse
 import com.example.askguru.viewmodel.ranking.RankingByFollowerCountResponse
 import com.example.askguru.viewmodel.ranking.RankingByRecommendedResponse
 import com.example.askguru.viewmodel.signup.SignUpRequest
 import com.example.askguru.viewmodel.signup.SignupResponse
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
+import retrofit2.Response
 import retrofit2.http.*
 
 interface ApiService {
@@ -55,10 +60,11 @@ interface ApiService {
     suspend fun getRankByRecommendedList(): RankingByRecommendedResponse
 
 
-
-
     @POST("playlists/{Id}/like")
     suspend fun like(@Header("Authorization") token: String, @Path("Id") userId: String): LikeResponse
+
+    @DELETE("playlists/{Id}/like")
+    suspend fun disLike(@Header("Authorization") token: String, @Path("Id") userId: String): LikeResponse
 
     @POST("search")
     suspend fun getSearchList(@Header("Authorization") token: String,@Query("request") searchText: String): SearchResponse
@@ -113,4 +119,16 @@ interface ApiService {
     @GET("users/{Id}")
     suspend fun getRankingProfileData(@Path("Id") userId: String): ProfileDataResponse
 
+    @Multipart
+    @POST("uploadfile/profile")
+    suspend fun uploadProfile(
+        @Header("Authorization") token: String,
+        @Part images: List<MultipartBody.Part> = emptyList(),
+    ): Response<UploadResponse>
+
+    @PUT("me")
+    suspend fun updateBio(
+        @Header("Authorization") application: String,
+        @Body request: UpdateProfileRequest
+    ): String
 }

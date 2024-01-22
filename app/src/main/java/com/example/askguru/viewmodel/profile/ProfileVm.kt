@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.liveData
 import com.example.askguru.network.Resource
 import com.example.askguru.repository.MainRepository
+import com.example.askguru.viewmodel.add_song.AddSuggestionRequest
 import kotlinx.coroutines.Dispatchers
+import okhttp3.MultipartBody
 
 class ProfileVm (private val mainRepository: MainRepository): ViewModel() {
 
@@ -54,5 +56,30 @@ class ProfileVm (private val mainRepository: MainRepository): ViewModel() {
     }
 
 
+    fun uploadProfilePic(token: String,images: List<MultipartBody.Part>) = liveData(Dispatchers.IO) {
+        emit(Resource.loading(data = null))
+        try {
+            emit(Resource.success(data = mainRepository.uploadProfile(token,images)))
+        } catch (exception: Exception) {
+            emit(Resource.error(data = null, message = exception.message ?: "Error Occurred!"))
+        }
+    }
 
+    fun updateBio(token: String,request: UpdateProfileRequest) = liveData(Dispatchers.IO) {
+        emit(Resource.loading(data = null))
+        try {
+            emit(Resource.success(data = mainRepository.updateBio(token,request)))
+        } catch (exception: Exception) {
+            emit(Resource.error(data = null, message = exception.message ?: "Error Occurred!"))
+        }
+    }
+
+    fun getUserData(token:String) = liveData(Dispatchers.IO) {
+        emit(Resource.loading(data = null))
+        try {
+            emit(Resource.success(data = mainRepository.getUserData(token)))
+        } catch (exception: Exception) {
+            emit(Resource.error(data = null, message = exception.message ?: "Error Occurred!"))
+        }
+    }
 }

@@ -45,9 +45,11 @@ class ProfilePlatListDetailsFragment : DialogFragment(), RecommendationListener 
 
     override fun getTheme(): Int = R.style.FullScreenDialogStyle
 
-    private var playTrackID: String? = null
-    private var playRecomndaded  = true
+    private var isRecommendationListClick = false
+    private var recommendationListClickPosition = -1
+    private var recommendationListClickedSpotifyId = ""
 
+    private var playTrackID: String? = null
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         binding = FragmentProfilePlatListDetailsBinding.inflate(inflater, container, false)
         // Inflate the layout for this fragment
@@ -158,7 +160,7 @@ class ProfilePlatListDetailsFragment : DialogFragment(), RecommendationListener 
 
     override fun onItemClick(list: Recommendation, position: Int) {
         Toast.makeText(requireContext(), "Playing - ${list.songTitle}", Toast.LENGTH_SHORT).show()
-        setSpotify(list.spotipyId,false)
+        recommendationListClick(clickPos = position,clickedSpotifyId = list.spotipyId.toString())
     }
     private fun acceptRequestApiCall(token: String, recommendationId: String, position: Int) {
         viewModel.acceptedRequest(token,recommendationId).observe(requireActivity(), Observer {
@@ -228,9 +230,8 @@ class ProfilePlatListDetailsFragment : DialogFragment(), RecommendationListener 
         })
     }
 
-    private fun setSpotify(spotifyID : String?,playRecomnd : Boolean = true) {
+    private fun setSpotify(spotifyID : String?) {
         spotifyID?.let {
-            playRecomndaded = playRecomnd
             playTrackID = "spotify:track:$it"
             SpotifyHelper.getInstance(requireContext()).setCallback(callback = storyOptionCallBack)
             SpotifyHelper.getInstance(requireContext()).authenticateSpotify()
@@ -269,13 +270,27 @@ class ProfilePlatListDetailsFragment : DialogFragment(), RecommendationListener 
         return queueList
     }
 
+    private fun recommendationListClick(clickPos : Int, clickedSpotifyId : String){
+        isRecommendationListClick = true
+        recommendationListClickPosition = clickPos
+        recommendationListClickedSpotifyId = "spotify:track:$clickedSpotifyId"
+
+        Log.d("SpotifyHelper","recommendationListClick $isRecommendationListClick , $recommendationListClickPosition, $recommendationListClickedSpotifyId")
+        SpotifyHelper.getInstance(requireContext()).setCallback(callback = storyOptionCallBack)
+        SpotifyHelper.getInstance(requireContext()).authenticateSpotify()
+    }
+
     private fun startPlaying() {
         /*SpotifyHelper.getInstance(requireContext()).playTrack(playTrackID!!)
         if(playRecomndaded){
             SpotifyHelper.getInstance(requireContext()).queueSongs(getQueueList())
         }*/
 
-        newPlaying()
+        if(isRecommendationListClick){
+            SpotifyHelper.getInstance(requireContext()).playRecommendationListClick(recommendationListClickedSpotifyId)
+        }else{
+            newPlaying()
+        }
     }
 
     private fun newPlaying(){
@@ -358,4 +373,6 @@ class ProfilePlatListDetailsFragment : DialogFragment(), RecommendationListener 
         super.onActivityResult(requestCode, resultCode, data)
         SpotifyHelper.getInstance(requireContext()).handleSpotifyAuthResponse(requestCode, resultCode, data)
     }
+
+
 }

@@ -26,9 +26,6 @@ import com.google.gson.Gson
 
 
 class LoginActivity : BaseActivity(), View.OnClickListener {
-
-
-
     private lateinit var mBinding: ActivityLoginBinding
     private lateinit var viewModel: LoginViewModel
     var isShowPassword = false
@@ -122,7 +119,6 @@ class LoginActivity : BaseActivity(), View.OnClickListener {
     }
 
     private fun loginApiCall() {
-
         var email =  mBinding.edEmail.text.toString().trim() //use1234@example.com
         var password = mBinding.edPassword.text.toString().trim() //"strings"
         var grant_type = ""

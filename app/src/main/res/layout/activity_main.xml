@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/black"
-    android:animateLayoutChanges="true">
+    android:animateLayoutChanges="true"
+    android:background="@color/black">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
@@ -27,21 +28,23 @@
             <androidx.appcompat.widget.AppCompatTextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/_10sdp"
+                android:layout_marginTop="@dimen/_2sdp"
+                android:layout_marginEnd="@dimen/_5sdp"
                 android:background="@drawable/orange_stroke"
                 android:paddingHorizontal="@dimen/_10sdp"
                 android:paddingVertical="@dimen/_3sdp"
                 android:text="Login"
-                android:layout_marginTop="@dimen/_2sdp"
-                android:layout_marginEnd="@dimen/_5sdp"
-                android:visibility="invisible"
-                android:layout_marginStart="@dimen/_10sdp"/>
+                android:visibility="invisible" />
 
             <View
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"/>
+                android:layout_weight="1" />
+
 
             <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/iconAskGuru"
                 android:layout_width="@dimen/_40sdp"
                 android:layout_height="@dimen/_40sdp"
                 app:srcCompat="@drawable/logo_small" />
@@ -49,31 +52,30 @@
             <View
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"/>
+                android:layout_weight="1" />
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/tvLogin"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/_2sdp"
+                android:layout_marginEnd="@dimen/_10sdp"
                 android:background="@drawable/orange_stroke"
                 android:paddingHorizontal="@dimen/_10sdp"
                 android:paddingVertical="@dimen/_3sdp"
-                android:text="Login"
-                android:layout_marginTop="@dimen/_2sdp"
-                android:layout_marginEnd="@dimen/_10sdp" />
+                android:text="Login" />
 
 
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/ivScanner"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:src="@drawable/ic_qr_code_scanner"
+                android:layout_marginEnd="@dimen/_10sdp"
                 android:padding="@dimen/_5sdp"
-                android:visibility="gone"
-                android:layout_marginEnd="@dimen/_10sdp"/>
+                android:src="@drawable/ic_qr_code_scanner"
+                android:visibility="gone" />
 
         </androidx.appcompat.widget.LinearLayoutCompat>
-
 
 
     </com.google.android.material.appbar.AppBarLayout>
@@ -82,8 +84,8 @@
         layout="@layout/view_current_play"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintBottom_toTopOf="@+id/nav_view"
-        android:visibility="gone"/>
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@+id/nav_view" />
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/nav_view"
@@ -111,4 +113,17 @@
         app:layout_constraintTop_toBottomOf="@+id/appBarLayout"
         app:navGraph="@navigation/mobile_navigation" />
 
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="@dimen/_20sdp"
+        android:layout_height="@dimen/_20sdp"
+        android:layout_centerInParent="true"
+        android:indeterminate="true"
+        android:progressDrawable="@drawable/progress_bar"
+        android:visibility="gone"
+        tools:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>

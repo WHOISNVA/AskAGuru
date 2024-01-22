@@ -3,33 +3,53 @@ package com.example.askguru.ui
 import android.Manifest
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupWithNavController
 import com.example.askguru.R
 import com.example.askguru.databinding.ActivityMainBinding
+import com.example.askguru.network.ApiHelper
+import com.example.askguru.network.RetrofitBuilder
+import com.example.askguru.network.Status
+import com.example.askguru.network.ViewModelFactory
 import com.example.askguru.ui.login.LoginActivity
 import com.example.askguru.ui.qr.ScannerActivity
 import com.example.askguru.utils.Const.Companion.PRE_IS_LOGIN
 import com.example.askguru.utils.PreferenceHelper
+import com.example.askguru.utils.SpotifyCallback
+import com.example.askguru.utils.SpotifyHelper
+import com.example.askguru.viewmodel.home.HomeVm
+import com.example.askguru.viewmodel.home.Playlist
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.permissionx.guolindev.PermissionX
+import com.spotify.android.appremote.api.SpotifyAppRemote
+import com.spotify.protocol.types.PlayerState
+import com.spotify.protocol.types.Track
+import java.util.*
 
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
 
+    private lateinit var viewModel: HomeVm
+
+    private var playTrackID: String? = null
+    private var playlistModel : Playlist? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        //ViewModelProvider(this).get(HomeViewModel::class.java)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        viewModel = ViewModelProvider(this, ViewModelFactory(ApiHelper(RetrofitBuilder.apiService)))[HomeVm::class.java]
+
 
         if (PreferenceHelper.getBooleanPreference(this, PRE_IS_LOGIN, false))
             binding.tvLogin.visibility = View.GONE
@@ -168,153 +188,138 @@ class MainActivity : AppCompatActivity() {
         //SpotifyHelper.getInstance(this).setCallback(callback = storyOptionCallBack)
         //SpotifyHelper.getInstance(this).authenticateSpotify()
 
+        binding.iconAskGuru.setOnClickListener {
+            viewModel.getAllPlayListRandom()
+        }
+        observer()
     }
+
+    private fun observer(){
+        viewModel.playlistsLiveData.observe(this) {
+            it.let { resource ->
+                when (resource.status) {
+                    Status.LOADING -> {
+                        binding.progressBar.visibility = View.VISIBLE
+                    }
+
+                    Status.SUCCESS -> {
+                        binding.progressBar.visibility = View.GONE
+                        viewModel.getRandomSong()
+                    }
+
+                    Status.ERROR -> {
+                        binding.progressBar.visibility = View.GONE
+                        Toast.makeText(
+                            this,
+                            "Some thing went wrong",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+
+                }
+            }
+        }
+
+        viewModel.randomPlaylist.observe(this) {
+            //play random playlist here
+            Log.d("randomPlaylist","$it")
+            setSpotify(it)
+        }
+    }
+
+    private fun setSpotify(playlist: Playlist) {
+        playlistModel = playlist
+        playlistModel?.spotipyId?.let {
+            playTrackID = "spotify:track:$it"
+            SpotifyHelper.getInstance(this).setCallback(callback = storyOptionCallBack)
+            SpotifyHelper.getInstance(this).authenticateSpotify()
+            Toast.makeText(this, "Playing - ${playlist.songTitle}", Toast.LENGTH_SHORT).show()
+        } ?: kotlin.run {
+            Toast.makeText(this, "can't play", Toast.LENGTH_SHORT).show()
+        }
+    }
+
 
     private fun openScannerScreen() {
         val intent = Intent(this, ScannerActivity::class.java)
         startActivity(intent)
     }
-
-    /*private var spotifyAppRemote: SpotifyAppRemote? = null
-    override fun onStart() {
-        super.onStart()
-    //    spotifyConnection()
-        spotifyAuth()
-    }
-
-    private fun spotifyConnection(){
-        val connectionParams = ConnectionParams.Builder(Const.SPOTIPY_CLIENT_ID)
-            .setRedirectUri(SPOTIPY_REDIRECT_URL)
-            .showAuthView(true)
-            .build()
-
-        SpotifyAppRemote.connect(this, connectionParams, object : Connector.ConnectionListener {
-            override fun onConnected(appRemote: SpotifyAppRemote) {
-                spotifyAppRemote = appRemote
-                Log.e("MainActivity", "spotifyConnection Connected! Yay!")
-                // Now you can start interacting with App Remote
-                connected()
-            }
-
-            override fun onFailure(throwable: Throwable) {
-                Log.e("MainActivity", "spotifyConnection ${throwable.message}")
-                // Something went wrong when attempting to connect! Handle errors here
-            }
-        })
-    }
-
-
-    private fun connected() {
-        spotifyAppRemote?.let {
-            // Play a playlist
-            val playlistURI = "spotify:playlist:30605fce-a75c-4e7c-af3f-75348b73fabe"
-            //val playlistURI = "spotify:track:2bgcUk2A3jjKbCJ7KPquTi"
-
-            it.playerApi.play(playlistURI)
-            // Subscribe to PlayerState
-            it.playerApi.subscribeToPlayerState().setEventCallback {
-                Log.d("MainActivity","spotifyConnection spotifyAppRemote isPaused ${it.isPaused}")
-                val track: Track = it.track
-                Log.d("MainActivity", "spotifyConnection" + track.name + " by " + track.artist.name)
-            }
-        }
-
-        spotifyAppRemote?.playerApi?.play("spotify:track:6SEolIp22t0DzeBfCBo3hr")
-
-    }
-
-    private fun pause(){
-        spotifyAppRemote?.playerApi?.pause()
-    }
-
-    private fun resume(){
-        spotifyAppRemote?.playerApi?.resume()
-    }
-
-
-    override fun onStop() {
-        super.onStop()
-        spotifyAppRemote?.let {
-            SpotifyAppRemote.disconnect(it)
-        }
-    }
-
-    private fun spotifyAuth(){
-        var REDIRECT_URI = SPOTIPY_REDIRECT_URL
-
-        val builder = AuthorizationRequest.Builder(Const.SPOTIPY_CLIENT_ID, AuthorizationResponse.Type.TOKEN, REDIRECT_URI)
-        builder.setScopes(arrayOf("streaming","user-read-email"))
-        //builder.setCampaign("your-campaign-token")
-        val request = builder.build()
-
-        AuthorizationClient.openLoginActivity(this, REQUEST_CODE, request)
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
-        super.onActivityResult(requestCode, resultCode, intent)
-
-        // Check if result comes from the correct activity
-        if (requestCode == REQUEST_CODE) {
-            val response = AuthorizationClient.getResponse(resultCode, intent)
-
-            Toast.makeText(this@MainActivity, "response :: ${response.type}", Toast.LENGTH_SHORT).show()
-            Log.e("MainActivity", "onActivityResult response ${response.error}")
-            when (response.type) {
-                AuthorizationResponse.Type.TOKEN -> {
-                    Log.e("MainActivity", "onActivityResult response ${response.accessToken}")
-                 spotifyConnection()
-                }
-                AuthorizationResponse.Type.ERROR -> {
-                    Toast.makeText(this@MainActivity, "response :: ${response.error}", Toast.LENGTH_SHORT).show()
-                }
-                else -> {}
-            }
-        }
-    }*/
-
-    /*override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
-        super.onActivityResult(requestCode, resultCode, intent)
-        SpotifyHelper.getInstance(this).handleSpotifyAuthResponse(requestCode, resultCode, intent)
-    }
-
-
-    //private var playTrackID = "spotify:track:6SEolIp22t0DzeBfCBo3hr"//default
-    //private var playTrackID = "spotify:track:2bgcUk2A3jjKbCJ7KPquTi"//Mi Niña
-    //private var playTrackID = "spotify:track:0hnvQLkV7yOjslEzflJSK4"//La Curiosidad
-    private var playTrackID = "spotify:track:1xK1Gg9SxG8fy2Ya373oqb"//Bandido
-
-    private val storyOptionCallBack = object : SpotifyCallback {
-        override fun onAlreadyAuthenticated() {
-        }
-
-        override fun onAuthSuccess(accessToken: String) {
-            val isConnected = SpotifyHelper.getInstance(this@MainActivity).isConnected()
-            if(isConnected){
-                SpotifyHelper.getInstance(this@MainActivity).playTrack(playTrackID)
-            }else{
-               SpotifyHelper.getInstance(this@MainActivity).connectSpotify()
-            }
-        }
-
-        override fun onAuthFailure(error: String) {
-
-        }
-
-        override fun onConnectedSuccess(appRemote: SpotifyAppRemote) {
-            SpotifyHelper.getInstance(this@MainActivity).playTrack(playTrackID)
-        }
-
-        override fun onConnectedError(error: String) {
-        }
-    }*/
+    
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
         // Forward the result to the current fragment in the NavHostFragment
-        val navHostFragment =
-            supportFragmentManager.findFragmentById(R.id.nav_host_fragment_activity_main) as? NavHostFragment
+        val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_activity_main) as? NavHostFragment
         val currentFragment = navHostFragment?.childFragmentManager?.primaryNavigationFragment
         currentFragment?.onActivityResult(requestCode, resultCode, data)
+    }
+
+    private val storyOptionCallBack = object : SpotifyCallback {
+        override fun onAlreadyAuthenticated() {
+            startPlaying()
+        }
+
+        override fun onAuthSuccess(accessToken: String) {
+            val isConnected = SpotifyHelper.getInstance(this@MainActivity).isConnected()
+            if (isConnected) {
+                startPlaying()
+            } else {
+                SpotifyHelper.getInstance(this@MainActivity).connectSpotify()
+            }
+        }
+
+        override fun onAuthFailure(error: String) {
+            Toast.makeText(this@MainActivity, "Auth - $error", Toast.LENGTH_SHORT).show()
+        }
+
+        override fun onConnectedSuccess(appRemote: SpotifyAppRemote) {
+            startPlaying()
+        }
+
+        override fun onConnectedError(error: String) {
+            Toast.makeText(this@MainActivity, "Connection - $error", Toast.LENGTH_SHORT).show()
+        }
+
+        override fun onPause(track: Track) {
+            //Toast.makeText(this, "onPause", Toast.LENGTH_SHORT).show()
+        }
+
+        override fun onPlay(track: Track) {
+            Toast.makeText(this@MainActivity, "onPlay()", Toast.LENGTH_SHORT).show()
+        }
+
+        override fun onTrackStatusChange(playerState: PlayerState) {
+            /* Log.d(
+                 "SpotifyHelper",
+                 "Playerdetailview playTrack track isPaused ${playerState.isPaused}"
+             )*/
+            playerState?.let {
+                it.track?.let {
+                    //     Log.d("SpotifyHelper", "Playerdetailview track url = ${it.uri}")
+                }
+            }
+        }
+
+        override fun onPlaybackError(error: String) {
+            Toast.makeText(this@MainActivity, "Play Error - $error", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun startPlaying() {
+        newPlaying()
+    }
+
+    private fun newPlaying(){
+        val songList = mutableListOf<String>()
+        songList.add(playTrackID.toString())
+        val recommendation =  playlistModel?.recommendations?.filter { it.spotipyId != null && it.spotipyId != "" }
+        recommendation?.forEachIndexed { index, recommendation ->
+            recommendation.spotipyId?.let {
+                songList.add("spotify:track:$it")
+            }
+        }
+
+        SpotifyHelper.getInstance(this).setUpPlayList(songList)
     }
 }
