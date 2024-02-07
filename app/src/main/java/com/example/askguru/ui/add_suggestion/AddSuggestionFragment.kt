@@ -109,9 +109,6 @@ class AddSuggestionFragment : DialogFragment(), SearchSelectClickListener {
                 return@setOnClickListener
             }
             addRecommendationApiCall(requestModel,playListId)
-
-
-
         }
     }
 

@@ -111,6 +111,7 @@ class ProfileFragment : Fragment {
                 false
             )
         ) {
+            setProfileFromPreference()
             binding.llLogin.visibility = View.GONE
             binding.llFollow.visibility = View.GONE
             getProfileDataApiCall()
@@ -472,32 +473,35 @@ class ProfileFragment : Fragment {
         val likeDataString = Gson().toJson(response?.playlists)
         PreferenceHelper.setStringPreference(requireContext(), "playlists", likeDataString)
 
+        setViewPagerAdapter()
+    }
+
+    private fun setProfileFromPreference(){
         val userDataString = PreferenceHelper.getStringPreference(requireContext(), "user_data")
         val userModel = Gson().fromJson(userDataString, UserResponse::class.java)
+        userModel?.let {
+            binding.tvEmail.text = userModel.email
+            binding.tvUserName.text = userModel.username
 
-        binding.tvEmail.text = userModel.email
-        binding.tvUserName.text = userModel.username
+            userModel.profile_pic?.let {
+                Glide.with(binding.ivUserImage.context)
+                    .load(Const.IMAGE_BASE_URL + userModel.profile_pic)
+                    .placeholder(R.drawable.ic_profile).into(binding.ivUserImage)
+            }
 
-        userModel.profile_pic.let {
-            Glide.with(binding.ivUserImage.context)
-                .load(Const.IMAGE_BASE_URL + userModel.profile_pic)
-                .placeholder(R.drawable.ic_profile).into(binding.ivUserImage)
+            userModel.total_listens?.let {
+                binding.tvTotalListensCount.text = userModel.total_listens.toString()
+            }
+
+            userModel.follower_data?.follower_count?.let {
+                binding.tvFollowersCount.text = userModel.follower_data.follower_count.toString()
+            }
+            userModel.biography?.let { bio ->
+                binding.tvBio.text = bio
+            } ?: run {
+                binding.tvBio.text = "I love music"
+            }
         }
-
-        userModel.total_listens.let {
-            binding.tvTotalListensCount.text = userModel.total_listens.toString()
-        }
-
-        userModel.follower_data.follower_count.let {
-            binding.tvFollowersCount.text = userModel.follower_data.follower_count.toString()
-        }
-        userModel.biography?.let { bio ->
-            binding.tvBio.text = bio
-        } ?: run {
-            binding.tvBio.text = "I love music"
-        }
-
-        setViewPagerAdapter()
     }
 
 
@@ -540,6 +544,7 @@ class ProfileFragment : Fragment {
     }
 
     private fun updateBio(text: String) {
+        binding.imgEditBio.visibility = View.VISIBLE
         val token = "Bearer " + PreferenceHelper.getStringPreference(
             requireActivity(),
             PRE_AUTHORIZATION_TOKEN
@@ -608,5 +613,3 @@ class ProfileFragment : Fragment {
         }
     }
 }
-
-//

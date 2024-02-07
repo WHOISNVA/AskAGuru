@@ -144,7 +144,8 @@
                 android:layout_gravity="center"
                 android:padding="@dimen/_5sdp"
                 android:src="@drawable/play"
-                android:tint="@color/white" />
+                android:tint="@color/white"
+                app:tint="@color/like_selected" />
 
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/iv_like"
@@ -152,8 +153,9 @@
                 android:layout_height="@dimen/_30sdp"
                 android:layout_gravity="center"
                 android:padding="@dimen/_5sdp"
-                android:src="@drawable/empty_heart"
-                android:tint="#F26600" />
+                android:src="@drawable/baseline_favorite_24"
+                android:tint="#F26600"
+                app:tint="@color/like_deselected" />
 
         </androidx.appcompat.widget.LinearLayoutCompat>
 
@@ -234,8 +236,17 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvSongs"
         android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:clipToPadding="true"
+        android:paddingBottom="@dimen/_40sdp" />
+
+    <include
+        android:id="@+id/includedPlaying"
+        layout="@layout/view_current_play"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1" />
+        android:visibility="visible" />
 
 
 </androidx.appcompat.widget.LinearLayoutCompat>

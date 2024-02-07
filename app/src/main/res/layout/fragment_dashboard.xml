@@ -76,7 +76,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="@dimen/_5sdp"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:visibility="visible">
 
             <ImageView
                 android:id="@+id/ivSongThumb"
@@ -94,7 +95,8 @@
                 android:maxLines="3"
                 android:textColor="@color/white"
                 android:textColorHint="@color/dark_grey"
-                android:textSize="@dimen/_14ssp" />
+                android:textSize="@dimen/_14ssp"
+                android:visibility="gone" />
 
         </androidx.appcompat.widget.LinearLayoutCompat>
 
@@ -103,6 +105,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
+            android:layout_marginTop="@dimen/_10sdp"
             android:gravity="center"
             android:orientation="horizontal">
 
@@ -113,12 +116,12 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center|start"
                 android:layout_marginHorizontal="@dimen/_2sdp"
+                android:layout_weight="1"
                 android:drawableStart="@drawable/add"
                 android:drawablePadding="@dimen/_10sdp"
                 android:fontFamily="@font/poppins_semi_bold"
                 android:gravity="center|start"
                 android:padding="@dimen/_5sdp"
-                android:layout_weight="1"
                 android:text="Add a song to playlist"
                 android:textColor="@color/white"
                 android:textSize="@dimen/_12ssp" />
@@ -155,7 +158,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:padding="@dimen/_10sdp"
-            android:visibility="gone"/>
+            android:visibility="gone" />
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnAdd"

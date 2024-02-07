@@ -315,13 +315,13 @@ class ProfilePlayListFragment() : Fragment(), GenreClickListener,ProfilePlayList
     /*** Click Listener ****/
     override fun onPlayListClicked(list: Playlist, position: Int) {
 
-        if(PreferenceHelper.getBooleanPreference(requireContext(),"is_fromRanking_click",false)) {
-
-            return
-        }
 
         val profilePlayListString = Gson().toJson(list)
-        PreferenceHelper.setStringPreference(requireContext(), "profile_playlists", profilePlayListString)
+
+        //if(!PreferenceHelper.getBooleanPreference(requireContext(),"is_fromRanking_click",false)) {
+            PreferenceHelper.setStringPreference(requireContext(), "profile_playlists", profilePlayListString)
+        //}
+
 
 
 /*

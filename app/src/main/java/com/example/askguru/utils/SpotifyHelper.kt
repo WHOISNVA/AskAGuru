@@ -1,9 +1,13 @@
 package com.example.askguru.utils
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.os.Handler
+import android.os.HandlerThread
 import android.util.Log
+import android.widget.Toast
 import com.spotify.android.appremote.api.ConnectionParams
 import com.spotify.android.appremote.api.Connector
 import com.spotify.android.appremote.api.SpotifyAppRemote
@@ -15,46 +19,96 @@ import com.spotify.sdk.android.auth.AuthorizationClient
 import com.spotify.sdk.android.auth.AuthorizationRequest
 import com.spotify.sdk.android.auth.AuthorizationResponse
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
-import java.util.*
 
-class SpotifyHelper(private val context: Context) {
+class SpotifyHelper(private val context: Activity) {
+    private val TAG = "SpotifyHelper"
+
     private var spotifyAppRemote: SpotifyAppRemote? = null
     private var isAuthenticated = false
     private var spotifyCallback: SpotifyCallback? = null
-    var isPaused: Boolean = false
-    var trackWasStarted: Boolean = false
-
+    private var trackWasStarted: Boolean = false
+    private var myTrack: String = ""
     private val playerStateData = MutableStateFlow<PlayerState?>(null)
 
-    private var recommendationQueueList = mutableListOf<String>()
-    private var myTrack: String = ""
-    private val TAG = "SpotifyHelper"
+    private var mySongList = mutableListOf<AskGuruTrack>()
+    private var currentPlayingIndex = 0
+    private var liveRunningTrack : String = ""
 
-    val stringQueue = LinkedList<String>()
+    var isPaused: Boolean = false
+    val currentAskGuruTrack = MutableStateFlow<AskGuruTrack?>(null)
+    val playState = MutableStateFlow<Boolean?>(null)
 
-    // Add data to the queue
-    fun enqueueData(data: String) {
-        stringQueue.add(data)
-    }
-
-    // Get data from the front of the queue
-    fun dequeueData(): String? {
-        return if (stringQueue.isNotEmpty()) {
-            stringQueue.removeFirst()
-        } else {
-            null
-        }
-    }
+    private var collectorJob: Job? = null
 
     fun setCallback(callback: SpotifyCallback) {
         spotifyCallback = callback
     }
 
+    fun authenticateSpotify() {
+        if (isAuthenticated) {
+            logD("authenticateSpotify already authenticated")
+            spotifyCallback?.onAlreadyAuthenticated()
+            return
+        }
+
+        logD("authenticateSpotify started")
+        val builder = AuthorizationRequest.Builder(
+            Const.SPOTIPY_CLIENT_ID,
+            AuthorizationResponse.Type.TOKEN,
+            Const.SPOTIPY_REDIRECT_URL
+        )
+        builder.setScopes(arrayOf("streaming", "user-read-email"))
+        val request = builder.build()
+        //AuthorizationClient.openLoginActivity(context, AUTH_REQUEST_CODE, request)
+        try {
+            val intent = AuthorizationClient.createLoginActivityIntent(context, request)
+            context.startActivityForResult(intent, AUTH_REQUEST_CODE)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            logD("Exception during login activity start: ${e.message}")
+        }
+    }
+
+    fun handleSpotifyAuthResponse(requestCode: Int, resultCode: Int, intent: Intent?) {
+        logD("authenticateSpotify handleSpotifyAuthResponse")
+        if (requestCode == AUTH_REQUEST_CODE) {
+            val response = AuthorizationClient.getResponse(resultCode, intent)
+
+            //Toast.makeText(context, "response :: ${response.type}", Toast.LENGTH_SHORT).show()
+            logD("authenticateSpotify handleSpotifyAuthResponse ${response.type}")
+            when (response.type) {
+                AuthorizationResponse.Type.TOKEN -> {
+
+                    logD(
+                        "authenticateSpotify handleSpotifyAuthResponse TOKEN ${response.accessToken}"
+                    )
+                    isAuthenticated = true
+                    spotifyCallback?.onAuthSuccess(response.accessToken)
+                }
+                AuthorizationResponse.Type.ERROR -> {
+                    logD(
+                        "authenticateSpotify handleSpotifyAuthResponse ERROR ${response.error}"
+                    )
+                    isAuthenticated = false
+                    spotifyCallback?.onAuthFailure(response.error)
+                }
+                else -> {
+                    isAuthenticated = false
+                }
+            }
+        }
+    }
+
+    fun isConnected(): Boolean {
+        return spotifyAppRemote?.isConnected == true
+    }
+
     fun connectSpotify() {
-        Log.d(TAG, "connectSpotify started")
+        logD("connectSpotify started")
         val connectionParams = ConnectionParams.Builder(Const.SPOTIPY_CLIENT_ID)
             .setRedirectUri(Const.SPOTIPY_REDIRECT_URL)
             .showAuthView(true)
@@ -62,53 +116,44 @@ class SpotifyHelper(private val context: Context) {
 
         connect(context, connectionParams, object : Connector.ConnectionListener {
             override fun onConnected(appRemote: SpotifyAppRemote) {
-                Log.d(TAG, "connectSpotify onConnected")
+                logD("connectSpotify onConnected")
                 spotifyAppRemote = appRemote
                 spotifyCallback?.onConnectedSuccess(appRemote)
             }
 
             override fun onFailure(throwable: Throwable) {
-                Log.d(TAG, "connectSpotify onFailure ${throwable.message}")
+                logD("connectSpotify onFailure ${throwable.message}")
             }
         })
     }
 
-    fun isConnected(): Boolean {
-        return spotifyAppRemote?.isConnected == true
-    }
-
-    fun disconnectSpotify() {
-        spotifyAppRemote?.let {
-            disconnect(it)
-        }
-    }
-
-    private var mySongList = listOf<String>()
-    private var currentPlayingIndex = 0
-    fun setUpPlayList(songList: MutableList<String>) {
-        Log.d(TAG, "new :: setUpPlayList $songList")
+    fun setUpPlayList(songList: MutableList<AskGuruTrack>) {
+        resetValues()
+        logD("new :: setUpPlayList $songList")
         updatePlayerData()
-        mySongList = songList
+        mySongList.clear()
+        mySongList.addAll(songList)
         currentPlayingIndex = 0
         playCurrentTrack()
-        //playNewSong(mySongList.first())
         spotifyAppRemote?.let {
             it.playerApi.subscribeToPlayerState().setEventCallback { playerState ->
+                liveRunningTrack = playerState.track.uri.toString()
                 isPaused = playerState.isPaused
                 playerStateData.value = playerState
+                playState.value = playerState.isPaused
                 spotifyCallback?.onTrackStatusChange(playerState)
-                // jumpToNextSongIfNeeded(currentTime = it.playbackPosition, duration = track.duration)*/
             }
 
             it.playerApi.playerState.setErrorCallback { error ->
                 spotifyCallback?.onPlaybackError("${error.message}")
-                Log.d(TAG, "new2 :: setErrorCallback ${error.message}")
+                logD("new :: setErrorCallback ${error.message}")
             }
         }
     }
 
     private fun updatePlayerData() {
-        GlobalScope.launch {
+        collectorJob?.cancel()
+        collectorJob = GlobalScope.launch {
             playerStateData
                 .debounce(500)
                 .collect { playerState ->
@@ -123,35 +168,43 @@ class SpotifyHelper(private val context: Context) {
                             val position = playerState.playbackPosition
                             val hasEnded = trackWasStarted && isPaused && position == 0L
                             //val songPlayingIsNotRight = it.track?.uri != myTrack/* expectedSong.uri or null if you want to stop */
-                            val songPlayingIsNotRight =
-                                !isPlayingCorrectSong2(playerState.track?.uri)/* expectedSong.uri or null if you want to stop */
+                            //val songPlayingIsNotRight = !isPlayingCorrectSong(track.uri)/* expectedSong.uri or null if you want to stop */
+                            val songPlayingIsNotRight = !isPlayingCorrectSong(liveRunningTrack)/* expectedSong.uri or null if you want to stop */
 
                             log.append(" trackWasStarted:$trackWasStarted hasEnded:$hasEnded songPlayingIsNotRight:$songPlayingIsNotRight")
 
                             if (hasEnded) {
                                 trackWasStarted = false
-                                nextTrack()
+                                nextTrack("hasEnded")
                                 log.append(" if :: new song $myTrack songPos : $currentPlayingIndex")
                             } else if (songPlayingIsNotRight && !playerState.isPaused) {
-                                nextTrack()
+                                nextTrack("else if :: playing track $liveRunningTrack")
                                 log.append(" else if :: new song $myTrack songPos : $currentPlayingIndex")
                             } else {
                                 log.append(" else")
                             }
-
                         } ?: kotlin.run {
                             log.append("track is null")
                         }
                     } ?: kotlin.run {
                         log.append("playerState is null")
                     }
-                    Log.d(TAG, "new2 :: subscribeToPlayerState $log")
+                    logD("new :: subscribeToPlayerState $log")
                 }
         }
     }
 
-    private fun nextTrack() {
-        Log.d(TAG, "new :: nextTrack")
+    private fun resetValues(){
+        mySongList.clear()
+        myTrack = ""
+        trackWasStarted = false
+        isPaused = false
+        currentPlayingIndex = 0
+        liveRunningTrack = ""
+    }
+
+    private fun nextTrack(strData : String = "default") {
+        logD("new :: nextTrack :: $strData")
         currentPlayingIndex?.let { index ->
             when {
                 index >= mySongList.size - 1 -> {
@@ -169,16 +222,17 @@ class SpotifyHelper(private val context: Context) {
         if (mySongList.isEmpty()) {
             return
         }
-
-        val currentTrackUri = mySongList[currentPlayingIndex]
-        Log.d(TAG, "new :: currentTrackUri $currentTrackUri")
-        myTrack = currentTrackUri
-        spotifyAppRemote?.playerApi?.play(currentTrackUri)
+        val askGuruTrack = mySongList[currentPlayingIndex]
+        spotifyAppRemote?.playerApi?.play(askGuruTrack.spotifyID)
+        myTrack = askGuruTrack.spotifyID
+        logD("new :: currentTrackUri $myTrack")
+        currentAskGuruTrack.value = askGuruTrack
     }
 
-    private fun isPlayingCorrectSong2(currentPlayingTrack: String?): Boolean {
+    private fun isPlayingCorrectSong(currentPlayingTrack: String?): Boolean {
         //if (currentPlayingTrack == myTrack || recommendationQueueList.contains(currentPlayingTrack)) {
-        if (currentPlayingTrack == myTrack || mySongList.contains(currentPlayingTrack)) {
+        //if (currentPlayingTrack == myTrack || mySongList.contains(currentPlayingTrack)) {
+        if (currentPlayingTrack == myTrack || mySongList.any { it.spotifyID == currentPlayingTrack }) {
             //Log.d(TAG,"isPlayingCorrectSong true $currentPlayingTrack myTrack $myTrack recommendationQueueList $recommendationQueueList")
             return true
         }
@@ -186,13 +240,44 @@ class SpotifyHelper(private val context: Context) {
         return false
     }
 
+    fun playNext(){
+        logD("new :: playNext")
+        currentPlayingIndex?.let { index ->
+            when {
+                index >= mySongList.size - 1 -> {
+                    //pause()
+                    Toast.makeText(context, "Last song", Toast.LENGTH_SHORT).show()
+                }
+                else -> {
+                    currentPlayingIndex = index + 1
+                    playCurrentTrack()
+                }
+            }
+        }
+    }
+
+    fun playPrevious(){
+        logD("new :: playPrevious")
+        currentPlayingIndex?.let { index ->
+            when {
+                index > 0 -> {
+                    currentPlayingIndex = index - 1
+                    playCurrentTrack()
+                }
+                else -> {
+                    Toast.makeText(context, "First song", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
     fun playRecommendationListClick(spotifyID: String) {
-        Log.d(TAG, "new2 :: playing playRecommendationListClick $spotifyID")
-        currentPlayingIndex = mySongList.indexOf(spotifyID)
+        logD("new :: playing playRecommendationListClick $spotifyID")
+        //currentPlayingIndex = mySongList.indexOf(spotifyID)
+        currentPlayingIndex = mySongList.indexOfFirst { it.spotifyID == spotifyID }
         playCurrentTrack()
     }
 
-    // ...
     private fun setTrackWasStarted(playerState: PlayerState) {
         val position = playerState.playbackPosition
         val duration = playerState.track.duration
@@ -203,17 +288,13 @@ class SpotifyHelper(private val context: Context) {
         }
     }
 
-    fun clearQueue() {
-        recommendationQueueList.clear()
-    }
-
     fun pause() {
-        Log.d(TAG, "pause ${spotifyAppRemote?.playerApi?.playerState?.requestId}")
+        logD("pause ${spotifyAppRemote?.playerApi?.playerState?.requestId}")
         spotifyAppRemote?.playerApi?.pause()
     }
 
     fun resume() {
-        Log.d(TAG, "resume ${spotifyAppRemote?.playerApi?.playerState?.requestId}")
+        logD("resume ${spotifyAppRemote?.playerApi?.playerState?.requestId}")
         spotifyAppRemote?.playerApi?.resume()
     }
 
@@ -221,62 +302,46 @@ class SpotifyHelper(private val context: Context) {
         spotifyAppRemote?.playerApi?.pause()
     }
 
-    fun authenticateSpotify() {
-        if (isAuthenticated) {
-            Log.d(TAG, "authenticateSpotify already authenticated")
-            spotifyCallback?.onAlreadyAuthenticated()
-            return
+    private fun disconnectSpotify() {
+        spotifyAppRemote?.let {
+            disconnect(it)
         }
-
-        Log.d(TAG, "authenticateSpotify started")
-        val builder = AuthorizationRequest.Builder(
-            Const.SPOTIPY_CLIENT_ID,
-            AuthorizationResponse.Type.TOKEN,
-            Const.SPOTIPY_REDIRECT_URL
-        )
-        builder.setScopes(arrayOf("streaming", "user-read-email"))
-        val request = builder.build()
-        AuthorizationClient.openLoginActivity(context as Activity, AUTH_REQUEST_CODE, request)
     }
 
-    fun handleSpotifyAuthResponse(requestCode: Int, resultCode: Int, intent: Intent?) {
-        Log.d(TAG, "authenticateSpotify handleSpotifyAuthResponse")
-        if (requestCode == AUTH_REQUEST_CODE) {
-            val response = AuthorizationClient.getResponse(resultCode, intent)
+   private fun revokeAuthentication() {
+        AuthorizationClient.clearCookies(context)
+    }
 
-            //Toast.makeText(context, "response :: ${response.type}", Toast.LENGTH_SHORT).show()
-            Log.d(TAG, "authenticateSpotify handleSpotifyAuthResponse ${response.type}")
-            when (response.type) {
-                AuthorizationResponse.Type.TOKEN -> {
+    fun logout() {
+        pause()
 
-                    Log.d(
-                        TAG,
-                        "authenticateSpotify handleSpotifyAuthResponse TOKEN ${response.accessToken}"
-                    )
-                    isAuthenticated = true
-                    spotifyCallback?.onAuthSuccess(response.accessToken)
-                }
-                AuthorizationResponse.Type.ERROR -> {
-                    Log.d(
-                        TAG,
-                        "authenticateSpotify handleSpotifyAuthResponse ERROR ${response.error}"
-                    )
-                    isAuthenticated = false
-                    spotifyCallback?.onAuthFailure(response.error)
-                }
-                else -> {
-                    isAuthenticated = false
-                }
-            }
-        }
+        revokeAuthentication()
+
+        // Disconnect Spotify
+        disconnectSpotify()
+
+        // Reset values
+        resetValues()
+
+        // Reset authentication status
+        isAuthenticated = false
+
+        instance = null
+    }
+
+    @SuppressLint("LogNotTimber")
+    fun logD(strLog: String) {
+        Log.d(TAG,strLog)
     }
 
     companion object {
         const val AUTH_REQUEST_CODE = 101
+
+        @SuppressLint("StaticFieldLeak")
         private var instance: SpotifyHelper? = null
 
         @Synchronized
-        fun getInstance(context: Context): SpotifyHelper {
+        fun getInstance(context: Activity): SpotifyHelper {
             if (instance == null) {
                 instance = SpotifyHelper(context)
             }
@@ -296,3 +361,11 @@ interface SpotifyCallback {
     fun onTrackStatusChange(playerState: PlayerState)
     fun onPlaybackError(error: String)
 }
+
+
+data class AskGuruTrack(
+    val title: String,
+    val spotifyID: String,
+    val imageUrl: String,
+    val subTitle: String
+)

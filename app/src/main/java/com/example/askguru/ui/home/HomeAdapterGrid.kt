@@ -31,7 +31,7 @@ private val listener : SongSelectedClickListener): RecyclerView.Adapter<HomeAdap
 
 
             binding.tvTitle.text =  list.playlist.songTitle
-            binding.tvSongBy.text = "By: ${list.playlist.username}"
+            binding.tvSongBy.text = "By: ${list.playlist.artistName}"
 
             list.playlist.playlistLikeCount.let {
                 binding.tvLikeCount.text = "${list.playlist.playlistLikeCount}"
@@ -40,9 +40,6 @@ private val listener : SongSelectedClickListener): RecyclerView.Adapter<HomeAdap
             list.playlist.listens.let {
                 binding.tvPlayCount.text = "${list.playlist.listens}"
             }
-
-
-
 
 
             Glide.with(binding.ivImage.context)

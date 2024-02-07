@@ -21,6 +21,7 @@ import com.example.askguru.utils.Const
 import com.example.askguru.utils.Const.Companion.PRE_IS_LOGIN
 import com.example.askguru.utils.InsetsWithKeyboardCallback
 import com.example.askguru.utils.PreferenceHelper
+import com.example.askguru.utils.SpotifyHelper
 import com.example.askguru.viewmodel.login.LoginViewModel
 import com.google.gson.Gson
 
@@ -172,7 +173,14 @@ class LoginActivity : BaseActivity(), View.OnClickListener {
 
                         PreferenceHelper.setStringPreference(this, Const.PRE_USER_ID,it.data?.user_id!!)
                         PreferenceHelper.setBooleanPreference(this,PRE_IS_LOGIN,true)
+
+
+                        SpotifyHelper.getInstance(this)?.let {
+                            it.logout()
+                        }
+
                         val intent = Intent(this, MainActivity::class.java)
+                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                         startActivity(intent)
                         finishAffinity()
 

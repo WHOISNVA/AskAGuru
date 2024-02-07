@@ -15,6 +15,7 @@ import com.example.askguru.databinding.FragmentSettingsBinding
 import com.example.askguru.ui.SplashActivity
 import com.example.askguru.utils.Const
 import com.example.askguru.utils.PreferenceHelper
+import com.example.askguru.utils.SpotifyHelper
 
 
 class SettingsFragment : DialogFragment() {
@@ -86,6 +87,10 @@ class SettingsFragment : DialogFragment() {
         builder.setTitle(title)
         builder.setMessage("Are you sure you want to logout")
         builder.setPositiveButton("Yes") { dialog, which ->
+            SpotifyHelper.getInstance(requireActivity())?.let {
+                it.logout()
+            }
+
             PreferenceHelper.deleteAllSharedPrefs(requireContext())
             dialog.dismiss()
             requireContext().startActivity(

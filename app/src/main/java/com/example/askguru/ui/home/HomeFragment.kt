@@ -1,11 +1,8 @@
 package com.example.askguru.ui.home
 
-import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -14,9 +11,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.setFragmentResult
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.findNavController
@@ -29,12 +24,13 @@ import com.example.askguru.network.ApiHelper
 import com.example.askguru.network.RetrofitBuilder
 import com.example.askguru.network.Status
 import com.example.askguru.network.ViewModelFactory
-import com.example.askguru.utils.Const
-import com.example.askguru.utils.PreferenceHelper
-import com.example.askguru.utils.SpotifyHelper
+import com.example.askguru.utils.*
 import com.example.askguru.viewmodel.home.*
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.gson.Gson
+import com.spotify.android.appremote.api.SpotifyAppRemote
+import com.spotify.protocol.types.PlayerState
+import com.spotify.protocol.types.Track
 
 
 class HomeFragment : Fragment(), SongSelectedClickListener, GenreClickListener {
@@ -55,13 +51,13 @@ class HomeFragment : Fragment(), SongSelectedClickListener, GenreClickListener {
 
     val tempList: ArrayList<PlayListResponseItem> = ArrayList()
 
-
-
+    
     private val genreList = ArrayList<GenreModel>()
     private lateinit var genreAdapter: GenreAdapter
 
 
-
+    private var askGuruTrack: AskGuruTrack? = null
+    private var playlistModel : Playlist? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         ViewModelProvider(this).get(HomeViewModel::class.java)
@@ -361,9 +357,10 @@ class HomeFragment : Fragment(), SongSelectedClickListener, GenreClickListener {
     override fun onPlayClick(list: PlayListResponseItem) {
 
         Log.e("kp","songUrl == ${list.playlist.songUrl}")
-
-        if (isPackageInstalled("com.apple.android.music", requireActivity().packageManager)) {
-
+        if(!list.playlist.spotipyId.isNullOrBlank()){
+         //play spotify songs
+            setSpotify(list.playlist)
+        }else if (isPackageInstalled("com.apple.android.music", requireActivity().packageManager)) {
             val openURL = Intent(Intent.ACTION_VIEW)
             openURL.data = Uri.parse(list.playlist.songUrl)
             startActivity(openURL)
@@ -459,11 +456,102 @@ class HomeFragment : Fragment(), SongSelectedClickListener, GenreClickListener {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        SpotifyHelper.getInstance(requireContext()).handleSpotifyAuthResponse(requestCode, resultCode, data)
+        SpotifyHelper.getInstance(requireActivity()).handleSpotifyAuthResponse(requestCode, resultCode, data)
+    }
+
+    private fun setSpotify(playlist: Playlist) {
+        playlistModel = playlist
+        playlistModel?.spotipyId?.let {
+            //askGuruTrack = "spotify:track:$it"
+            askGuruTrack = AskGuruTrack(
+                title = playlistModel?.songTitle ?: "",
+                spotifyID = "spotify:track:$it",
+                imageUrl = playlistModel?.artwork ?: "",
+                subTitle = playlistModel?.artistName ?: ""
+            )
+            SpotifyHelper.getInstance(requireActivity()).setCallback(callback = storyOptionCallBack)
+            SpotifyHelper.getInstance(requireActivity()).authenticateSpotify()
+            //Toast.makeText(requireContext(), "Playing - ${playlist.songTitle}", Toast.LENGTH_SHORT).show()
+        } ?: kotlin.run {
+            Toast.makeText(requireContext(), "can't play", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private val storyOptionCallBack = object : SpotifyCallback {
+        override fun onAlreadyAuthenticated() {
+            startPlaying()
+        }
+
+        override fun onAuthSuccess(accessToken: String) {
+            val isConnected = SpotifyHelper.getInstance(requireActivity()).isConnected()
+            if (isConnected) {
+                startPlaying()
+            } else {
+                SpotifyHelper.getInstance(requireActivity()).connectSpotify()
+            }
+        }
+
+        override fun onAuthFailure(error: String) {
+            Toast.makeText(requireContext(), "Auth - $error", Toast.LENGTH_SHORT).show()
+        }
+
+        override fun onConnectedSuccess(appRemote: SpotifyAppRemote) {
+            startPlaying()
+        }
+
+        override fun onConnectedError(error: String) {
+            Toast.makeText(requireContext(), "Connection - $error", Toast.LENGTH_SHORT).show()
+        }
+
+        override fun onPause(track: Track) {
+            //Toast.makeText(this, "onPause", Toast.LENGTH_SHORT).show()
+        }
+
+        override fun onPlay(track: Track) {
+            Toast.makeText(requireContext(), "onPlay()", Toast.LENGTH_SHORT).show()
+        }
+
+        override fun onTrackStatusChange(playerState: PlayerState) {
+            /* Log.d(
+                 "SpotifyHelper",
+                 "Playerdetailview playTrack track isPaused ${playerState.isPaused}"
+             )*/
+            playerState?.let {
+                it.track?.let {
+                    //     Log.d("SpotifyHelper", "Playerdetailview track url = ${it.uri}")
+                }
+            }
+        }
+
+        override fun onPlaybackError(error: String) {
+            Toast.makeText(requireContext(), "Play Error - $error", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun startPlaying() {
+        newPlaying()
+    }
+
+    private fun newPlaying(){
+        val songList = mutableListOf<AskGuruTrack>()
+        //songList.add(askGuruTrack.toString())
+        askGuruTrack?.let {
+            songList.add(it)
+        }
+        val recommendation =  playlistModel?.recommendations?.filter { it.spotipyId != null && it.spotipyId != "" }
+        recommendation?.forEachIndexed { index, recommendation ->
+            recommendation.spotipyId?.let {
+                //songList.add("spotify:track:$it")
+                val item = AskGuruTrack(
+                    title = recommendation.songTitle,
+                    spotifyID = "spotify:track:$it",
+                    imageUrl = recommendation.artwork,
+                    subTitle = recommendation.artistName
+                )
+                songList.add(item)
+            }
+        }
+
+        SpotifyHelper.getInstance(requireActivity()).setUpPlayList(songList)
     }
 }
-
-
-
-
-

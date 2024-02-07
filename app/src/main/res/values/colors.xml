@@ -31,4 +31,7 @@
 
     <color name="shimmer_color">#909090</color>
 
+
+    <color name="like_selected">#F26600</color>
+    <color name="like_deselected">#909090</color>
 </resources>

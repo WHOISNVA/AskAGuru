@@ -20,6 +20,7 @@ import com.example.askguru.ui.base.BaseActivity
 import com.example.askguru.utils.Const
 import com.example.askguru.utils.InsetsWithKeyboardCallback
 import com.example.askguru.utils.PreferenceHelper
+import com.example.askguru.utils.SpotifyHelper
 import com.example.askguru.viewmodel.signup.SignUpVm
 import com.example.askguru.viewmodel.signup.SignupResponse
 import com.google.gson.Gson
@@ -140,7 +141,7 @@ class SignUpActivity : BaseActivity(), View.OnClickListener {
                             PreferenceHelper.setBooleanPreference(this, Const.PRE_IS_LOGIN,true)
 
                             val gson = Gson()
-                            val responseString = gson.toJson(it)
+                            val responseString = gson.toJson(it.data)
                             PreferenceHelper.setStringPreference(this, Const.PRE_USER_DATA,responseString)
                             PreferenceHelper.setStringPreference(this, Const.PRE_USER_ID,it.data.user_id)
 
@@ -148,7 +149,11 @@ class SignUpActivity : BaseActivity(), View.OnClickListener {
 
                             //val model = gson.fromJson("string", SignupResponse::class.java)
 
+                            SpotifyHelper.getInstance(this)?.let {
+                                it.logout()
+                            }
                             val intent = Intent(this, MainActivity::class.java)
+                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                             startActivity(intent)
                             finishAffinity()
 

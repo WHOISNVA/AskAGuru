@@ -8,10 +8,12 @@ import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupWithNavController
+import com.bumptech.glide.Glide
 import com.example.askguru.R
 import com.example.askguru.databinding.ActivityMainBinding
 import com.example.askguru.network.ApiHelper
@@ -20,6 +22,7 @@ import com.example.askguru.network.Status
 import com.example.askguru.network.ViewModelFactory
 import com.example.askguru.ui.login.LoginActivity
 import com.example.askguru.ui.qr.ScannerActivity
+import com.example.askguru.utils.AskGuruTrack
 import com.example.askguru.utils.Const.Companion.PRE_IS_LOGIN
 import com.example.askguru.utils.PreferenceHelper
 import com.example.askguru.utils.SpotifyCallback
@@ -31,7 +34,7 @@ import com.permissionx.guolindev.PermissionX
 import com.spotify.android.appremote.api.SpotifyAppRemote
 import com.spotify.protocol.types.PlayerState
 import com.spotify.protocol.types.Track
-import java.util.*
+import kotlinx.coroutines.launch
 
 
 class MainActivity : AppCompatActivity() {
@@ -40,15 +43,18 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var viewModel: HomeVm
 
-    private var playTrackID: String? = null
-    private var playlistModel : Playlist? = null
+    private var askGuruTrack: AskGuruTrack? = null
+    private var playlistModel: Playlist? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         //ViewModelProvider(this).get(HomeViewModel::class.java)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        viewModel = ViewModelProvider(this, ViewModelFactory(ApiHelper(RetrofitBuilder.apiService)))[HomeVm::class.java]
+        viewModel = ViewModelProvider(
+            this,
+            ViewModelFactory(ApiHelper(RetrofitBuilder.apiService))
+        )[HomeVm::class.java]
 
 
         if (PreferenceHelper.getBooleanPreference(this, PRE_IS_LOGIN, false))
@@ -194,7 +200,7 @@ class MainActivity : AppCompatActivity() {
         observer()
     }
 
-    private fun observer(){
+    private fun observer() {
         viewModel.playlistsLiveData.observe(this) {
             it.let { resource ->
                 when (resource.status) {
@@ -222,18 +228,67 @@ class MainActivity : AppCompatActivity() {
 
         viewModel.randomPlaylist.observe(this) {
             //play random playlist here
-            Log.d("randomPlaylist","$it")
+            Log.d("randomPlaylist", "$it")
             setSpotify(it)
+        }
+
+        binding.includedPlaying.imgPlayPause.setOnClickListener {
+            if (SpotifyHelper.getInstance(this@MainActivity).isPaused) {
+                SpotifyHelper.getInstance(this@MainActivity).resume()
+            } else {
+                SpotifyHelper.getInstance(this@MainActivity).pause()
+            }
+        }
+
+        binding.includedPlaying.imgNext.setOnClickListener {
+            SpotifyHelper.getInstance(this@MainActivity).playNext()
+        }
+        binding.includedPlaying.imgPrevious.setOnClickListener {
+            SpotifyHelper.getInstance(this@MainActivity).playPrevious()
+        }
+
+        lifecycleScope.launch {
+            SpotifyHelper.getInstance(this@MainActivity).currentAskGuruTrack.collect { askGuruTrack ->
+                askGuruTrack?.let {
+                    binding.includedPlaying.mainLayout.visibility = View.VISIBLE
+                    binding.includedPlaying.tvTitle.text = askGuruTrack.title
+                    binding.includedPlaying.tvSubTitle.text = askGuruTrack.subTitle
+                    askGuruTrack.imageUrl?.let {
+                        Glide.with(this@MainActivity).load(askGuruTrack.imageUrl)
+                            .into(binding.includedPlaying.imgTrack)
+                    }
+                } ?: kotlin.run {
+                    binding.includedPlaying.mainLayout.visibility = View.GONE
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            SpotifyHelper.getInstance(this@MainActivity).playState.collect { isPaused ->
+                isPaused?.let {
+                    if (isPaused) {
+                        binding.includedPlaying.imgPlayPause.setImageResource(R.drawable.play)
+                    } else {
+                        binding.includedPlaying.imgPlayPause.setImageResource(R.drawable.pause)
+                    }
+                }
+            }
         }
     }
 
     private fun setSpotify(playlist: Playlist) {
         playlistModel = playlist
         playlistModel?.spotipyId?.let {
-            playTrackID = "spotify:track:$it"
+            //askGuruTrack = "spotify:track:$it"
+            askGuruTrack = AskGuruTrack(
+                title = playlistModel?.songTitle ?: "",
+                spotifyID = "spotify:track:$it",
+                imageUrl = playlistModel?.artwork ?: "",
+                subTitle = playlistModel?.artistName ?: ""
+            )
             SpotifyHelper.getInstance(this).setCallback(callback = storyOptionCallBack)
             SpotifyHelper.getInstance(this).authenticateSpotify()
-            Toast.makeText(this, "Playing - ${playlist.songTitle}", Toast.LENGTH_SHORT).show()
+            //Toast.makeText(this, "Playing - ${playlist.songTitle}", Toast.LENGTH_SHORT).show()
         } ?: kotlin.run {
             Toast.makeText(this, "can't play", Toast.LENGTH_SHORT).show()
         }
@@ -244,13 +299,14 @@ class MainActivity : AppCompatActivity() {
         val intent = Intent(this, ScannerActivity::class.java)
         startActivity(intent)
     }
-    
+
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
         // Forward the result to the current fragment in the NavHostFragment
-        val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_activity_main) as? NavHostFragment
+        val navHostFragment =
+            supportFragmentManager.findFragmentById(R.id.nav_host_fragment_activity_main) as? NavHostFragment
         val currentFragment = navHostFragment?.childFragmentManager?.primaryNavigationFragment
         currentFragment?.onActivityResult(requestCode, resultCode, data)
     }
@@ -296,7 +352,11 @@ class MainActivity : AppCompatActivity() {
              )*/
             playerState?.let {
                 it.track?.let {
-                    //     Log.d("SpotifyHelper", "Playerdetailview track url = ${it.uri}")
+                    if (playerState.isPaused) {
+                        binding.includedPlaying.imgPlayPause.setImageResource(R.drawable.play)
+                    } else {
+                        binding.includedPlaying.imgPlayPause.setImageResource(R.drawable.pause)
+                    }
                 }
             }
         }
@@ -310,16 +370,24 @@ class MainActivity : AppCompatActivity() {
         newPlaying()
     }
 
-    private fun newPlaying(){
-        val songList = mutableListOf<String>()
-        songList.add(playTrackID.toString())
-        val recommendation =  playlistModel?.recommendations?.filter { it.spotipyId != null && it.spotipyId != "" }
+    private fun newPlaying() {
+        val songList = mutableListOf<AskGuruTrack>()
+        askGuruTrack?.let {
+            songList.add(it)
+        }
+        val recommendation = playlistModel?.recommendations?.filter { it.spotipyId != null && it.spotipyId != "" }
         recommendation?.forEachIndexed { index, recommendation ->
             recommendation.spotipyId?.let {
-                songList.add("spotify:track:$it")
+                //songList.add("spotify:track:$it")
+                val item = AskGuruTrack(
+                    title = recommendation.songTitle,
+                    spotifyID = "spotify:track:$it",
+                    imageUrl = recommendation.artwork,
+                    subTitle = recommendation.artistName
+                )
+                songList.add(item)
             }
         }
-
         SpotifyHelper.getInstance(this).setUpPlayList(songList)
     }
 }

@@ -33,7 +33,7 @@ class HomeAdapter(private val playList: ArrayList<PlayListResponseItem>, val lis
 
 
             binding.tvTitle.text =  list.playlist.songTitle
-            binding.tvSongBy.text = "By: ${list.playlist.username}"
+            binding.tvSongBy.text = "By: ${list.playlist.artistName}"
 
             list.playlist.playlistLikeCount.let {
                 binding.tvLikeCount.text = "${list.playlist.playlistLikeCount}"

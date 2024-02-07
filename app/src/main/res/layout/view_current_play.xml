@@ -1,61 +1,88 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mainLayout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    >
-
-    <androidx.appcompat.widget.AppCompatSeekBar
-        android:id="@+id/appCompatSeekBar"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:max="100"
-        android:paddingStart="0dp"
-        android:paddingEnd="0dp"
-        android:progress="50"
-        android:progressBackgroundTint="#ccc"
-        android:thumb="@null"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+    android:layout_height="wrap_content"
+    android:background="@color/black_100">
 
     <ImageView
-        android:id="@+id/imageView"
+        android:id="@+id/imgTrack"
         android:layout_width="60dp"
         android:layout_height="60dp"
-        android:src="@drawable/dummy1"
+        android:layout_marginEnd="@dimen/_10sdp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/appCompatSeekBar" />
+        tools:src="@drawable/dummy1" />
 
     <TextView
-        android:id="@+id/textView"
-        android:layout_width="wrap_content"
+        android:id="@+id/tvTitle"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:text="E-GIRLS ARE RUINING MY LIFE!"
+        android:layout_marginTop="@dimen/_2sdp"
+        android:layout_toStartOf="@+id/llButtons"
+        android:layout_toEndOf="@+id/imgTrack"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:singleLine="true"
         android:textColor="@color/white"
+        android:textSize="@dimen/_11ssp"
         android:textStyle="bold"
-        app:layout_constraintStart_toEndOf="@+id/imageView"
-        app:layout_constraintTop_toBottomOf="@+id/appCompatSeekBar" />
+        tools:text="E-GIRLS ARE RUINING MY LIFE!" />
 
     <TextView
-        android:id="@+id/textView2"
+        android:id="@+id/tvSubTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="CORPSE"
+        android:layout_below="@+id/tvTitle"
+        android:layout_marginTop="@dimen/_2sdp"
+        android:layout_toStartOf="@+id/llButtons"
+        android:layout_toEndOf="@+id/imgTrack"
+        android:ellipsize="end"
+        android:gravity="start"
+        android:maxLines="1"
+        android:singleLine="true"
         android:textColor="@color/white"
-        app:layout_constraintStart_toStartOf="@+id/textView"
-        app:layout_constraintTop_toBottomOf="@+id/textView" />
+        android:textSize="@dimen/_10ssp"
+        tools:text="CORPSE" />
 
-    <ImageView
-        android:id="@+id/imageView2"
+    <LinearLayout
+        android:id="@+id/llButtons"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="24dp"
-        app:layout_constraintBottom_toBottomOf="@+id/imageView"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/imageView"
-        app:srcCompat="@drawable/pause" />
+        android:layout_alignParentEnd="true"
+        android:layout_marginHorizontal="@dimen/_5sdp"
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        android:gravity="center"
+        app:layout_constraintBottom_toBottomOf="@+id/imgTrack"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/imgTrack">
+
+        <ImageView
+            android:id="@+id/imgPrevious"
+            android:layout_width="@dimen/_35sdp"
+            android:layout_height="@dimen/_35sdp"
+            android:padding="@dimen/_5sdp"
+            android:rotation="180"
+            app:srcCompat="@drawable/next_track"
+            app:tint="@color/white" />
+
+        <ImageView
+            android:id="@+id/imgPlayPause"
+            android:layout_width="@dimen/_25sdp"
+            android:layout_height="@dimen/_25sdp"
+            android:padding="@dimen/_5sdp"
+            app:srcCompat="@drawable/pause"
+            app:tint="@color/white" />
+
+        <ImageView
+            android:id="@+id/imgNext"
+            android:layout_width="@dimen/_35sdp"
+            android:layout_height="@dimen/_35sdp"
+            android:padding="@dimen/_5sdp"
+            app:srcCompat="@drawable/next_track"
+            app:tint="@color/white" />
+    </LinearLayout>
+
+
+</RelativeLayout>
